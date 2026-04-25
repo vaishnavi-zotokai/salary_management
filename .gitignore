@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Environment
+.env
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+dist/
+.next/
+
+# OS
+.DS_Store
