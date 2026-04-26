@@ -16,9 +16,12 @@ def list_employees(
     page_size: int = Query(20, ge=1, le=100),
     search:    str | None = Query(None),
     country:   str | None = Query(None),
+    department: str | None = Query(None),
     db: Session = Depends(get_db),
 ):
-    items, total = employee_service.get_employees(db, page, page_size, search, country)
+    items, total = employee_service.get_employees(
+        db, page, page_size, search, country, department
+    )
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 

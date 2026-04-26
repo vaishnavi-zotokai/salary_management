@@ -75,3 +75,11 @@ class InsightsResponse(BaseModel):
     max_salary:     Optional[float] = None
     avg_salary:     Optional[float] = None
     employee_count: int
+
+
+class DepartmentInsightItem(BaseModel):
+    department:     str
+    avg_salary:     Optional[float] = None
+    min_salary:     Optional[float] = None
+    max_salary:     Optional[float] = None
+    employee_count: int

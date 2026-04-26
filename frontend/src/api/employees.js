@@ -1,7 +1,21 @@
 import client from './client'
 
-export const getEmployees = ({ page = 1, page_size = 20, search = '', country = '' } = {}) =>
-  client.get('/employees', { params: { page, page_size, search: search || undefined, country: country || undefined } })
+export const getEmployees = ({
+  page = 1,
+  page_size = 20,
+  search = '',
+  country = '',
+  department = '',
+} = {}) =>
+  client.get('/employees', {
+    params: {
+      page,
+      page_size,
+      search: search || undefined,
+      country: country || undefined,
+      department: department || undefined,
+    },
+  })
     .then(r => r.data)
 
 export const getEmployee = (id) =>
@@ -18,4 +32,8 @@ export const deleteEmployee = (id) =>
 
 export const getInsights = ({ country, job_title } = {}) =>
   client.get('/insights', { params: { country, job_title: job_title || undefined } })
+    .then(r => r.data)
+
+export const getDepartmentInsights = (country) =>
+  client.get('/insights/departments', { params: { country } })
     .then(r => r.data)
