@@ -82,7 +82,6 @@ const selectStyle = {
 
 const AvgIcon     = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12 6 7l3 3 5-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
 const PayrollIcon = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"/><circle cx="8" cy="8.5" r="2" stroke="currentColor" strokeWidth="1.5"/><path d="M4 4V3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1" stroke="currentColor" strokeWidth="1.5"/></svg>
-const GapIcon     = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M10 5l3 3-3 3M6 5 3 8l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
 const BonusIcon   = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 3.5L13 6l-2.5 2.5.5 3.5L8 10.5 5 12l.5-3.5L3 6l3.5-.5L8 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>
 const UsersIcon   = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/><path d="M1 13c0-2.21 2.239-4 5-4s5 1.79 5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M11.5 3a2 2 0 0 1 0 4M15 13c0-1.657-1.567-3-3.5-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
 
@@ -160,10 +159,12 @@ function OverviewTab({ country, jobTitle }) {
   const bonusRate    = getBonusRate(jobTitle)
   const totalPayroll = data?.avg_salary && data?.employee_count ? data.avg_salary * data.employee_count : null
   const bonusPool    = totalPayroll ? totalPayroll * bonusRate : null
-  const payGapRatio  = data?.min_salary && data?.max_salary ? (data.max_salary / data.min_salary).toFixed(1) : null
 
   const validCountries = (allData ?? []).filter(d => d.avg > 0)
-  const globalAvg      = validCountries.length ? Math.round(validCountries.reduce((s, d) => s + d.avg, 0) / validCountries.length) : null
+  const otherCountries = validCountries.filter(d => d.full !== country)
+  const othersAvg      = otherCountries.length
+    ? Math.round(otherCountries.reduce((s, d) => s + d.avg, 0) / otherCountries.length)
+    : null
   const sortedByAvg    = [...validCountries].sort((a, b) => b.avg - a.avg)
   const countryRank    = sortedByAvg.findIndex(d => d.full === country) + 1
 
@@ -178,13 +179,12 @@ function OverviewTab({ country, jobTitle }) {
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, flexShrink: 0 }}>
-        {isLoading ? [...Array(5)].map((_, i) => <div key={i} style={SKELETON_CARD} />) : (<>
-          <StatCard label="Avg Salary"    value={fmt(data?.avg_salary)}  color="purple" sub={country}                                      icon={<AvgIcon />} />
-          <StatCard label="Total Payroll" value={fmtCompact(totalPayroll)} color="blue" sub={`${(data?.employee_count ?? 0).toLocaleString()} employees`} icon={<PayrollIcon />} />
-          <StatCard label="Pay Gap"       value={payGapRatio ? `${payGapRatio}×` : '—'} color="amber" sub="max ÷ min salary"              icon={<GapIcon />} />
-          <StatCard label="Bonus Pool"    value={fmtCompact(bonusPool)}  color="green"  sub={`${Math.round(bonusRate * 100)}% · ${jobTitle || 'all roles'}`} icon={<BonusIcon />} />
-          <StatCard label="Employees"     value={(data?.employee_count ?? 0).toLocaleString()} color="slate" sub={country}                icon={<UsersIcon />} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, flexShrink: 0 }}>
+        {isLoading ? [...Array(4)].map((_, i) => <div key={i} style={SKELETON_CARD} />) : (<>
+          <StatCard label="Avg Salary"    value={fmt(data?.avg_salary)}    color="purple" sub={country}                                                         icon={<AvgIcon />} />
+          <StatCard label="Total Payroll" value={fmtCompact(totalPayroll)} color="blue"   sub={`${(data?.employee_count ?? 0).toLocaleString()} employees`}      icon={<PayrollIcon />} />
+          <StatCard label="Bonus Pool"    value={fmtCompact(bonusPool)}    color="green"  sub={`${Math.round(bonusRate * 100)}% · ${jobTitle || 'all roles'}`}   icon={<BonusIcon />} />
+          <StatCard label="Employees"     value={(data?.employee_count ?? 0).toLocaleString()} color="slate" sub={country}                                       icon={<UsersIcon />} />
         </>)}
       </div>
 
@@ -196,7 +196,7 @@ function OverviewTab({ country, jobTitle }) {
             <strong style={{ color: '#0f172a' }}>{country}</strong> ranks{' '}
             <strong style={{ color: '#4f46e5' }}>#{countryRank} of {sortedByAvg.length}</strong> countries by average salary
             {jobTitle && <span style={{ color: '#94a3b8' }}> for {jobTitle}s</span>}.
-            {globalAvg && <span style={{ color: '#94a3b8' }}> Global average: {fmt(globalAvg)}.</span>}
+            {othersAvg && <span style={{ color: '#94a3b8' }}> Other countries avg: {fmt(othersAvg)}.</span>}
           </p>
         </div>
       )}
@@ -205,15 +205,15 @@ function OverviewTab({ country, jobTitle }) {
       <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 14 }}>
         <ChartCard
           title="Average Salary by Country"
-          subtitle={`${jobTitle || 'All roles'} · dashed = global average`}
-          legend={<Legend items={[{ color: '#4f46e5', label: 'Selected' }, { color: '#c7d2fe', label: 'Others' }, { color: '#94a3b8', label: 'Global avg' }]} />}
+          subtitle={`${jobTitle || 'All roles'} · dashed = avg of other countries`}
+          legend={<Legend items={[{ color: '#4f46e5', label: 'Selected' }, { color: '#c7d2fe', label: 'Others' }, { color: '#94a3b8', label: 'Others avg' }]} />}
         >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={salaryChartData} margin={{ top: 4, right: 4, left: 10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis dataKey="country" tick={AXIS_STYLE} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={AXIS_STYLE} axisLine={false} tickLine={false} />
-              {globalAvg && <ReferenceLine y={globalAvg} stroke="#94a3b8" strokeDasharray="5 4" strokeWidth={1.5} />}
+              {othersAvg && <ReferenceLine y={othersAvg} stroke="#94a3b8" strokeDasharray="5 4" strokeWidth={1.5} />}
               <Tooltip content={<SalaryTooltip />} cursor={{ fill: '#f8fafc' }} />
               <Bar dataKey="avg" maxBarSize={48} shape={barShape('avg', '#4f46e5', '#c7d2fe')} />
             </BarChart>
@@ -381,8 +381,8 @@ function DepartmentTab({ country }) {
           </div>
 
           {/* Table header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 60px', gap: 0, padding: '8px 18px', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
-            {['Department', 'Avg', 'Range', 'Count'].map(h => (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 60px', gap: 0, padding: '8px 18px', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
+            {['Department', 'Avg Salary', 'Count'].map(h => (
               <span key={h} style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
             ))}
           </div>
@@ -404,13 +404,12 @@ function DepartmentTab({ country }) {
               rows.map((d, i) => {
                 const color   = DEPT_COLOR[d.department] ?? '#64748b'
                 const bg      = DEPT_BG[d.department]   ?? '#f8fafc'
-                const payGap  = d.min_salary ? (d.max_salary / d.min_salary).toFixed(1) : '—'
                 const isTop   = i === 0
                 return (
                   <div
                     key={d.department}
                     style={{
-                      display: 'grid', gridTemplateColumns: '1fr 80px 80px 60px',
+                      display: 'grid', gridTemplateColumns: '1fr 80px 60px',
                       padding: '11px 18px', borderBottom: '1px solid #f8fafc',
                       background: isTop ? bg : 'transparent',
                       transition: 'background 0.1s',
@@ -428,10 +427,6 @@ function DepartmentTab({ country }) {
                     {/* Avg salary */}
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', fontVariantNumeric: 'tabular-nums' }}>
                       {fmt(d.avg_salary)}
-                    </span>
-                    {/* Pay gap ratio */}
-                    <span style={{ fontSize: 12, color: '#64748b', fontVariantNumeric: 'tabular-nums' }}>
-                      {payGap !== '—' ? `${payGap}×` : '—'}
                     </span>
                     {/* Employee count */}
                     <span style={{ fontSize: 12, color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>
